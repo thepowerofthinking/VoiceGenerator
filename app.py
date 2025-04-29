@@ -2,8 +2,12 @@ from flask import Flask, request, send_file, jsonify, render_template
 from gtts import gTTS
 from googletrans import Translator
 import os
+from flask_cors import CORS  # <-- ADD THIS
 
 app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "*"}})
+
+
 translator = Translator()
 
 @app.route("/")
