@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🧠 The Power Of Thinking | Voice Generator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #eef2f7;
+      margin: 20px;
+    }
+    h1, h2 {
+      text-align: center;
+    }
+    textarea {
+      width: 100%;
+      height: 100px;
+      padding: 10px;
+      margin-top: 5px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      resize: vertical;
+    }
+    select, button, input[type="range"] {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .controls button {
+      width: 45%;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🧠 The Power Of Thinking</h1>
+  <h2>Voice Generator</h2>
+
+  <label for="original-text">Original Text:</label>
+  <textarea id="original-text" placeholder="Enter text to translate..."></textarea>
+
+  <label for="language">🌍 Translate To:</label>
+  <select id="language">
+    <option value="en">English</option>
+    <option value="es" selected>Spanish</option>
+    <option value="fr">French</option>
+    <option value="de">German</option>
+    <option value="it">Italian</option>
+    <option value="pt">Portuguese</option>
+    <option value="ar">Arabic</option>
+    <option value="hi">Hindi</option>
+  </select>
+
+  <button onclick="translateText()">🔁 Translate</button>
+
+  <label for="translated-text">Translated Text:</label>
+  <textarea id="translated-text" readonly></textarea>
+
+  <button onclick="generateAudio()">🎙️ Generate Audio</button>
+
+  <div class="controls">
+    <button onclick="playAudio()">▶️ Play</button>
+    <button onclick="pauseAudio()">⏸️ Pause</button>
+    <button onclick="resumeAudio()">🔄 Resume</button>
+    <button onclick="stopAudio()">⏹️ Stop</button>
+    <button onclick="rewindAudio()">⏮️ Rewind 5s</button>
+    <button onclick="forwardAudio()">⏭️ Forward 5s</button>
+    <button onclick="saveAudio()">💾 Save</button>
+  </div>
+
+  <input type="range" id="audio-slider" min="0" max="100" value="0">
+
+  <script>
+    let audio = new Audio();
+    let isPlaying = false;
+
+    function translateText() {
+      const text = document.getElementById('original-text').value;
+      const lang = document.getElementById('language').value;
+
+      fetch('https://voicegenerator.onrender.com/translate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: text, target_lang: lang })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.translated_text) {
+          document.getElementById('translated-text').value = data.translated_text;
+        } else {
+          alert("Translation Error: " + data.error);
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Translation failed.');
+      });
+    }
+
+    function generateAudio() {
+      const text = document.getElementById('translated-text').value;
+      const lang = document.getElementById('language').value;
+
+      fetch('https://voicegenerator.onrender.com/generate_audio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: text, lang: lang })
+      })
+      .then(response => response.blob())
+      .then(blob => {
+        const url = URL.createObjectURL(blob);
+        audio.src = url;
+        playAudio();
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Audio generation failed.');
+      });
+    }
+
+    function playAudio() {
+      if (audio.src) {
+        audio.play();
+        isPlaying = true;
+      }
+    }
+
+    function pauseAudio() {
+      if (isPlaying) {
+        audio.pause();
+        isPlaying = false;
+      }
+    }
+
+    function resumeAudio() {
+      if (!isPlaying) {
+        audio.play();
+        isPlaying = true;
+      }
+    }
+
+    function stopAudio() {
+      audio.pause();
+      audio.currentTime = 0;
+      isPlaying = false;
+    }
+
+    function rewindAudio() {
+      audio.currentTime = Math.max(0, audio.currentTime - 5);
+    }
+
+    function forwardAudio() {
+      audio.currentTime = Math.min(audio.duration, audio.currentTime + 5);
+    }
+
+    function saveAudio() {
+      if (!audio.src) {
+        alert("No audio to save.");
+        return;
+      }
+      const a = document.createElement('a');
+      a.href = audio.src;
+      a.download = 'voice_output.mp3';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+  </script>
+
+</body>
+</html>
